@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Defining custom models · ADDM.jl</title><meta name="title" content="Defining custom models · ADDM.jl"/><meta property="og:title" content="Defining custom models · ADDM.jl"/><meta property="twitter:title" content="Defining custom models · ADDM.jl"/><meta name="description" content="Documentation for ADDM.jl."/><meta property="og:description" content="Documentation for ADDM.jl."/><meta property="twitter:description" content="Documentation for ADDM.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="ADDM.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ADDM.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../getting_started/">Getting started with ADDM.jl</a></li><li><a class="tocitem" href="../empirical_data/">Parameter estimation on empirical data</a></li><li class="is-active"><a class="tocitem" href>Defining custom models</a><ul class="internal"><li><a class="tocitem" href="#Load-package"><span>Load package</span></a></li><li><a class="tocitem" href="#Define-simulator"><span>Define simulator</span></a></li><li><a class="tocitem" href="#Define-model-container"><span>Define model container</span></a></li><li><a class="tocitem" href="#Define-likelihood-function"><span>Define likelihood function</span></a></li></ul></li><li><a class="tocitem" href="../model_comparison/">Uncertainty in the best fitting parameters of a single generative process</a></li></ul></li><li><a class="tocitem" href="../../apireference/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Defining custom models</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Defining custom models</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/aDDM-Toolbox/ADDM.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/aDDM-Toolbox/ADDM.jl/blob/main/docs/src/tutorials/custom_model.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Defining-custom-models"><a class="docs-heading-anchor" href="#Defining-custom-models">Defining custom models</a><a id="Defining-custom-models-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-custom-models" title="Permalink"></a></h1><p>Though the packages comes with the standard attentional DDM that allows for multiplicative and additive discounting of unattended items, users might also conceive of other generative processes (within the sequantial sampling to a bound framework) that give rise to observed choices, response times.  </p><p>In this tutorial we lay out the framework for how to incorporate such models within our toolbox to take advantage of Julia&#39;s processing speed.  </p><p>Broadly, this involves defining three parts: </p><ol><li>trial simulator describing how the new parameter changes the data generating process resulting in a choice and response time</li></ol><ul><li>this is then fed into <code>ADDM.simulate_data</code> along with the model object and stimuli to generate choice and response times.</li></ul><ol><li>model object with new parameter</li></ol><ul><li>this is only a container of key-value pairs of parameter names and values used a convenient wrapper to feed into the simulator and likelihood computer.</li></ul><ol><li>trial likelihood calculator computing the probability of the observed choice and response time</li></ol><ul><li>this is then fed into <code>ADDM.grid_search</code> along with the data you want to compute the likelihoods for and the parameter search space.</li></ul><h2 id="Load-package"><a class="docs-heading-anchor" href="#Load-package">Load package</a><a id="Load-package-1"></a><a class="docs-heading-anchor-permalink" href="#Load-package" title="Permalink"></a></h2><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using ADDM</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using Distributions</code><code class="nohighlight hljs ansi" style="display:block;"></code></pre><h2 id="Define-simulator"><a class="docs-heading-anchor" href="#Define-simulator">Define simulator</a><a id="Define-simulator-1"></a><a class="docs-heading-anchor-permalink" href="#Define-simulator" title="Permalink"></a></h2><p>The built-in model has a <code>decay</code> parameter for a linear decay of the <code>barrier</code>. Let&#39;s build a model with an exponential decay of the barrier such that the barrier at each timestep is defined as <code>barrier(t) = exp(-λt)</code>.</p><p>Based on the <a href="https://github.com/aDDM-Toolbox/ADDM.jl/blob/main/src/simulate_data.jl">built-in trial simulators as defined here</a> the trial simulator would look like the following:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; function my_trial_simulator(;model::ADDM.aDDM, fixationData::ADDM.FixationData,
+                               valueLeft::Number, valueRight::Number,
+                               timeStep::Number=10.0, numFixDists::Int64=3, cutOff::Number=100000)
+       
+           fixUnfixValueDiffs = Dict(1 =&gt; valueLeft - valueRight, 2 =&gt; valueRight - valueLeft)
+       
+           fixItem = Number[]
+           fixTime = Number[]
+           fixRDV = Number[]
+       
+           RDV = model.bias
+           trialTime = 0
+           choice = 0
+           tRDV = Number[RDV]
+           RT = 0
+           uninterruptedLastFixTime = 0
+           ndtTimeSteps = Int64(model.nonDecisionTime ÷ timeStep)
+       
+           # The values of the barriers can change over time.
+           # In this case we include an exponential decay
+           # Due to the shape of the exponential decay function the starting point for the decay is exp(0) = 1
+           barrierUp = exp.(-model.λ .* (0:cutOff-1))
+           barrierDown = -exp.(-model.λ .* (0:cutOff-1))
+       
+           # Sample and iterate over the latency for this trial.
+           latency = rand(fixationData.latencies)
+           remainingNDT = model.nonDecisionTime - latency
+       
+           # This will not change anything (i.e. move the RDV) if there is no latency data in the fixations
+           for t in 1:Int64(latency ÷ timeStep)
+               # Sample the change in RDV from the distribution.
+               RDV += rand(Normal(0, model.σ))
+               push!(tRDV, RDV)
+       
+               # If the RDV hit one of the barriers, the trial is over.
+               # No barrier decay before decision-related accummulation
+               if abs(RDV) &gt;= model.barrier
+                   choice = RDV &gt;= 0 ? -1 : 1
+                   push!(fixRDV, RDV)
+                   push!(fixItem, 0)
+                   push!(fixTime, t * timeStep)
+                   trialTime += t * timeStep
+                   RT = trialTime
+                   uninterruptedLastFixTime = latency
+                   trial = Trial(choice = choice, RT = RT, valueLeft = valueLeft, valueRight = valueRight)
+                   trial.fixItem = fixItem
+                   trial.fixTime = fixTime
+                   trial.fixRDV = fixRDV
+                   trial.uninterruptedLastFixTime = uninterruptedLastFixTime
+                   trial.RDV = tRDV
+                   return trial
+               end
+           end
+       
+           # Add latency to this trial&#39;s data
+           push!(fixRDV, RDV)
+           push!(fixItem, 0)
+           push!(fixTime, latency - (latency % timeStep))
+           trialTime += latency - (latency % timeStep)
+       
+           fixNumber = 1
+           prevFixItem = -1
+           currFixLocation = 0
+           decisionReached = false
+       
+           # Begin decision related accummulation
+           cumTimeStep = 0
+           while true
+               if currFixLocation == 0
+                   # This is an item fixation; sample its location.
+                   if prevFixItem == -1
+                       # Sample the first item fixation for this trial.
+                       currFixLocation = rand(Bernoulli(1 - fixationData.probFixLeftFirst)) + 1
+                   elseif prevFixItem in [1, 2]
+                       currFixLocation = abs(3 - prevFixItem)
+                   end
+                   prevFixItem = currFixLocation
+       
+                   # Sample the duration of this item fixation.
+                   valueDiff = fixUnfixValueDiffs[currFixLocation]
+                   #[1] is here to make sure it&#39;s not sampling from 1-element Vector but from the array inside it
+                   currFixTime = rand(fixationData.fixations[fixNumber][valueDiff][1])
+       
+       
+                   if fixNumber &lt; numFixDists
+                       fixNumber += 1
+                   end
+       
+               else
+                   # This is a transition.
+                    currFixLocation = 0
+                   # Sample the duration of this transition. The fixation data used below does not have transition information so ignoring this.
+                   # currFixTime = rand(fixationData.transitions)
+                   currFixTime = 0
+               end
+       
+               # Iterate over the remaining non-decision time remaining after the latency
+               # This can span more than first fixation depending on the first fixation duration
+               # That&#39;s why it&#39;s not conditioned over the fixation number
+               if remainingNDT &gt; 0
+                   for t in 1:Int64(remainingNDT ÷ timeStep)
+                       # Sample the change in RDV from the distribution.
+                       RDV += rand(Normal(0, model.σ))
+                       push!(tRDV, RDV)
+       
+                       # If the RDV hit one of the barriers, the trial is over.
+                       # No barrier decay before decision-related accummulation
+                       if abs(RDV) &gt;= model.barrier
+                           choice = RDV &gt;= 0 ? -1 : 1
+                           push!(fixRDV, RDV)
+                           push!(fixItem, currFixLocation)
+                           push!(fixTime, t * timeStep)
+                           trialTime += t * timeStep
+                           RT = trialTime
+                           uninterruptedLastFixTime = currFixTime
+                           decisionReached = true
+                           break
+                       end
+                   end
+               end
+       
+               # Break out of the while loop if decision reached during NDT
+               # The break above only breaks from the NDT for loop
+               if decisionReached
+                   break
+               end
+       
+               remainingFixTime = max(0, currFixTime - max(0, remainingNDT))
+               remainingNDT -= currFixTime
+       
+               # Iterate over the duration of the current fixation.
+               # Does not move RDV if there is no fixation time left due to NDT
+               for t in 1:Int64(remainingFixTime ÷ timeStep)
+                   # We use a distribution to model changes in RDV
+                   # stochastically. The mean of the distribution (the change
+                   # most likely to occur) is calculated from the model
+                   # parameters and from the values of the two items.
+                   if currFixLocation == 0
+                       μ = 0
+                   elseif currFixLocation == 1
+                       μ = model.d * ( (valueLeft + model.η) - (model.θ * valueRight))
+                   elseif currFixLocation == 2
+                       μ = model.d * ((model.θ * valueLeft) - (valueRight + model.η))
+                   end
+       
+                   # Sample the change in RDV from the distribution.
+                   RDV += rand(Normal(μ, model.σ))
+                   push!(tRDV, RDV)
+       
+                   # Increment cumulative timestep to look up the correct barrier value in case there has been a decay
+                   # Decay in this case only happens during decision-related accummulation (not before)
+                   # Don&#39;t want to use t here because this is reset for each fixation throughout a trial but the barrier is not
+                   cumTimeStep += 1
+       
+                   # If the RDV hit one of the barriers, the trial is over.
+                   # Decision related accummulation here so barrier might have decayed
+                   if abs(RDV) &gt;= barrierUp[cumTimeStep]
+                       choice = RDV &gt;= 0 ? -1 : 1
+                       push!(fixRDV, RDV)
+                       push!(fixItem, currFixLocation)
+                       push!(fixTime, t * timeStep)
+                       trialTime += t * timeStep
+                       RT = trialTime
+                       uninterruptedLastFixTime = currFixTime
+                       decisionReached = true
+                       break
+                   end
+               end
+       
+               # Break out of the while loop if decision reached during NDT
+               # The break above only breaks from the curFixTime for loop
+               if decisionReached
+                   break
+               end
+       
+               # Add fixation to this trial&#39;s data.
+               push!(fixRDV, RDV)
+               push!(fixItem, currFixLocation)
+               push!(fixTime, currFixTime - (currFixTime % timeStep))
+               trialTime += currFixTime - (currFixTime % timeStep)
+       
+           end
+       
+           trial = ADDM.Trial(choice = choice, RT = RT, valueLeft = valueLeft, valueRight = valueRight)
+           trial.fixItem = fixItem
+           trial.fixTime = fixTime
+           trial.fixRDV = fixRDV
+           trial.uninterruptedLastFixTime = uninterruptedLastFixTime
+           trial.RDV = tRDV
+           return trial
+       end</code><code class="nohighlight hljs ansi" style="display:block;">my_trial_simulator (generic function with 1 method)</code></pre><h2 id="Define-model-container"><a class="docs-heading-anchor" href="#Define-model-container">Define model container</a><a id="Define-model-container-1"></a><a class="docs-heading-anchor-permalink" href="#Define-model-container" title="Permalink"></a></h2><p>Now create a model object of class <code>aDDM</code> to store the parameters of our model. There are two ways of doing this. First, we could use the <code>ADDM.define_model</code> function. That would like:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model = ADDM.define_model(d = 0.007, σ = 0.03, θ = .6, barrier = 1, nonDecisionTime = 100, bias = 0.0)</code><code class="nohighlight hljs ansi" style="display:block;">ADDM.aDDM(Dict{Symbol, Any}(:nonDecisionTime =&gt; 100, :σ =&gt; 0.03, :d =&gt; 0.007, :bias =&gt; 0.0, :barrier =&gt; 1, :decay =&gt; 0, :θ =&gt; 0.6, :η =&gt; 0.0))</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model.λ = .05</code><code class="nohighlight hljs ansi" style="display:block;">0.05</code></pre><p>The <code>ADDM.define_model</code> function is limited to the standard parameter names. So the new parameter <code>λ</code> is added to the model after its creation. Alternatively, we can create an empty model object and add our parameters individually.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model = ADDM.aDDM()</code><code class="nohighlight hljs ansi" style="display:block;">ADDM.aDDM(Dict{Symbol, Any}())</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model.d = 0.007</code><code class="nohighlight hljs ansi" style="display:block;">0.007</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model.σ = 0.03</code><code class="nohighlight hljs ansi" style="display:block;">0.03</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model.θ = .6</code><code class="nohighlight hljs ansi" style="display:block;">0.6</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model.barrier = 1</code><code class="nohighlight hljs ansi" style="display:block;">1</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model.nonDecisionTime = 100</code><code class="nohighlight hljs ansi" style="display:block;">100</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model.bias = 0.0</code><code class="nohighlight hljs ansi" style="display:block;">0.0</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_model.λ = .05</code><code class="nohighlight hljs ansi" style="display:block;">0.05</code></pre><h3 id="Simulate-data"><a class="docs-heading-anchor" href="#Simulate-data">Simulate data</a><a id="Simulate-data-1"></a><a class="docs-heading-anchor-permalink" href="#Simulate-data" title="Permalink"></a></h3><h4 id="Define-stimuli-and-fixation-distribution"><a class="docs-heading-anchor" href="#Define-stimuli-and-fixation-distribution">Define stimuli and fixation distribution</a><a id="Define-stimuli-and-fixation-distribution-1"></a><a class="docs-heading-anchor-permalink" href="#Define-stimuli-and-fixation-distribution" title="Permalink"></a></h4><p>We will use sample empirical data from Krajbich et al. (2010) to create sample stimuli and fixation distributions. Importantly, we will <em>not</em> be using the empirical choices and response times but instead simulate our own data given the generative process we defined in our custom model and the parameter values we specify for it (i.e. in this notebook we do not fit this custom model to the empirical data from Krajbich et al.).</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using CSV</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using DataFrames</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; fn = &quot;./data/Krajbich2010_stims.csv&quot;</code><code class="nohighlight hljs ansi" style="display:block;">&quot;./data/Krajbich2010_stims.csv&quot;</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tmp = DataFrame(CSV.File(fn, delim=&quot;,&quot;))</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: ArgumentError: &quot;./data/Krajbich2010_stims.csv&quot; is not a valid file or doesn&#39;t exist</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_stims = (valueLeft = tmp.item_left, valueRight = tmp.item_right)</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: tmp not defined</code></pre><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; data = ADDM.load_data_from_csv(&quot;./data/Krajbich2010_behavior.csv&quot;, &quot;./data/Krajbich2010_fixations.csv&quot;)</code><code class="nohighlight hljs ansi" style="display:block;">Error while reading experimental data file ./data/Krajbich2010_behavior.csv</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; vDiffs = sort(unique(my_stims.valueLeft - my_stims.valueRight))</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: my_stims not defined</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_fixations = ADDM.process_fixations(data, fixDistType=&quot;fixation&quot;, valueDiffs = vDiffs)</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: vDiffs not defined</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; # There no second fixation durations for vDiff == 7 so we&#39;ll use the third fixation info for second too.
+       my_fixations.fixations[2][7] = my_fixations.fixations[3][7]</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: my_fixations not defined</code></pre><h4 id="Simulate-choice-and-response-times"><a class="docs-heading-anchor" href="#Simulate-choice-and-response-times">Simulate choice and response times</a><a id="Simulate-choice-and-response-times-1"></a><a class="docs-heading-anchor-permalink" href="#Simulate-choice-and-response-times" title="Permalink"></a></h4><p>There are 979 rows in the stims. We&#39;ll add more trials to help recover true parameters.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_args = (timeStep = 10.0, cutOff = 20000, fixationData = my_fixations)</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: my_fixations not defined</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_sim_data = ADDM.simulate_data(my_model, my_stims, my_trial_simulator, my_args)</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: my_stims not defined</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; for i in 1:2
+         this_sim_data = ADDM.simulate_data(my_model, my_stims, my_trial_simulator, my_args)
+         append!(my_sim_data, this_sim_data)
+         i += 1
+       end</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: my_stims not defined</code></pre><h2 id="Define-likelihood-function"><a class="docs-heading-anchor" href="#Define-likelihood-function">Define likelihood function</a><a id="Define-likelihood-function-1"></a><a class="docs-heading-anchor-permalink" href="#Define-likelihood-function" title="Permalink"></a></h2><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; function my_likelihood_fn(;model::ADDM.aDDM, trial::ADDM.Trial, timeStep::Number = 10.0,
+                                          approxStateStep::Number = 0.1)
+       
+           # Iterate over the fixations and discount the non-decision time.
+           if model.nonDecisionTime &gt; 0
+               correctedFixItem = Number[]
+               correctedFixTime = Number[]
+               remainingNDT = model.nonDecisionTime
+               for (fItem, fTime) in zip(trial.fixItem, trial.fixTime) # iterate through each fixation in the trial
+                   if remainingNDT &gt; 0
+                       push!(correctedFixItem, 0)
+                       push!(correctedFixTime, min(remainingNDT, fTime)) # if the fTime is smaller push that otherwise push ndt
+                       push!(correctedFixItem, fItem)
+                       push!(correctedFixTime, max(fTime - remainingNDT, 0))
+                       remainingNDT = remainingNDT - fTime
+                   else
+                       push!(correctedFixItem, fItem)
+                       push!(correctedFixTime, fTime)
+                   end
+               end
+           else
+               correctedFixItem = trial.fixItem
+               correctedFixTime = trial.fixTime
+           end
+       
+           # Iterate over the fixations and get the number of time steps for this trial.
+           numTimeSteps = 0
+       
+           for fTime in correctedFixTime
+               numTimeSteps += Int64(fTime ÷ timeStep)
+           end
+       
+           if numTimeSteps &lt; 1
+               throw(RuntimeError(&quot;Trial response time is smaller than time step.&quot;))
+           end
+           numTimeSteps += 1
+       
+           # The values of the barriers can change over time.
+           barrierUp = exp.(-model.λ .* (0:numTimeSteps-1))
+           barrierDown = -exp.(-model.λ .* (0:numTimeSteps-1))
+       
+           # Obtain correct state step.
+           halfNumStateBins = ceil(model.barrier / approxStateStep)
+           stateStep = model.barrier / (halfNumStateBins + 0.5)
+       
+           # The vertical axis is divided into states.
+           states = range(-1*(model.barrier) + stateStep / 2, 1*(model.barrier) - stateStep/2, step=stateStep)
+       
+           # Find the state corresponding to the bias parameter.
+           biasState = argmin(abs.(states .- model.bias))
+       
+           # Initial probability for all states is zero, except the bias state,
+           # for which the initial probability is one.
+           prStates = zeros(length(states), numTimeSteps)
+           prStates[biasState,1] = 1
+       
+           # The probability of crossing each barrier over the time of the trial.
+           probUpCrossing = zeros(numTimeSteps)
+           probDownCrossing = zeros(numTimeSteps)
+       
+           time = 1
+       
+           # Dictionary of μ values from fItem.
+           μDict = Dict{Number, Number}()
+           for fItem in 0:2
+               if fItem == 1
+                   μ = model.d * ((trial.valueLeft + model.η) - (model.θ * trial.valueRight))
+               elseif fItem == 2
+                   μ = model.d * ((model.θ * trial.valueLeft) - (trial.valueRight + model.η))
+               else
+                   μ = 0
+               end
+       
+               μDict[fItem] = μ
+           end
+       
+           changeMatrix = states .- reshape(states, 1, :)
+           changeUp = (barrierUp .- reshape(states, 1, :))&#39;
+           changeDown = (barrierDown .- reshape(states, 1, :) )&#39;
+       
+           pdfDict = Dict{Number, Any}()
+           cdfUpDict = Dict{Number, Any}()
+           cdfDownDict = Dict{Number, Any}()
+       
+           for fItem in 0:2
+               normpdf = similar(changeMatrix)
+               cdfUp = similar(changeUp[:, time])
+               cdfDown = similar(changeDown[:, time])
+       
+               @. normpdf = pdf(Normal(μDict[fItem], model.σ), changeMatrix)
+               @. cdfUp = cdf(Normal(μDict[fItem], model.σ), changeUp[:, time])
+               @. cdfDown = cdf(Normal(μDict[fItem], model.σ), changeDown[:, time])
+               pdfDict[fItem] = normpdf
+               cdfUpDict[fItem] = cdfUp
+               cdfDownDict[fItem] = cdfDown
+           end
+       
+           # Iterate over all fixations in this trial.
+           for (fItem, fTime) in zip(correctedFixItem, correctedFixTime)
+               # We use a normal distribution to model changes in RDV
+               # stochastically. The mean of the distribution (the change most
+               # likely to occur) is calculated from the model parameters and from
+               # the item values.
+               μ = μDict[fItem]
+               normpdf = pdfDict[fItem]
+               cdfUp = cdfUpDict[fItem]
+               cdfDown = cdfDownDict[fItem]
+       
+               # Iterate over the time interval of this fixation.
+               for t in 1:Int64(fTime ÷ timeStep)
+                   # Update the probability of the states that remain inside the
+                   # barriers. The probability of being in state B is the sum,
+                   # over all states A, of the probability of being in A at the
+                   # previous timestep times the probability of changing from A to
+                   # B. We multiply the probability by the stateStep to ensure
+                   # that the area under the curves for the probability
+                   # distributions probUpCrossing and probDownCrossing add up to 1.
+                   prStatesNew = stateStep * (normpdf * prStates[:,time])
+                   prStatesNew[(states .&gt;= barrierUp[time]) .| (states .&lt;= barrierDown[time])] .= 0
+       
+                   # Calculate the probabilities of crossing the up barrier and
+                   # the down barrier. This is given by the sum, over all states
+                   # A, of the proability of being in A at the previous timestep
+                   # times the probability of crossing the barrier if A is the
+                   # previous state.
+                   tempUpCross = dot(prStates[:,time], 1 .- cdfUp)
+                   tempDownCross = dot(prStates[:,time], cdfDown)
+       
+                   # Renormalize to cope with numerical approximations.
+                   sumIn = sum(prStates[:,time])
+                   sumCurrent = sum(prStatesNew) + tempUpCross + tempDownCross
+                   prStatesNew = prStatesNew * sumIn / sumCurrent
+                   tempUpCross = tempUpCross * sumIn / sumCurrent
+                   tempDownCross = tempDownCross * sumIn / sumCurrent
+       
+                   # Update the probabilities of each state and the probabilities of
+                   # crossing each barrier at this timestep
+                   prStates[:,time+1] = prStatesNew
+                   probUpCrossing[time+1] = tempUpCross
+                   probDownCrossing[time+1] = tempDownCross
+       
+                   time += 1
+               end
+           end
+       
+           # Compute the likelihood contribution of this trial based on the final
+           # choice.
+           likelihood = 0
+           if trial.choice == -1 # Choice was left.
+               if probUpCrossing[end] &gt; 0
+                   likelihood = probUpCrossing[end]
+               end
+           elseif trial.choice == 1 # Choice was right.
+               if probDownCrossing[end] &gt; 0
+                   likelihood = probDownCrossing[end]
+               end
+           end
+       
+           return likelihood
+       end</code><code class="nohighlight hljs ansi" style="display:block;">my_likelihood_fn (generic function with 1 method)</code></pre><h3 id="Recover-parameters-for-simulated-data"><a class="docs-heading-anchor" href="#Recover-parameters-for-simulated-data">Recover parameters for simulated data</a><a id="Recover-parameters-for-simulated-data-1"></a><a class="docs-heading-anchor-permalink" href="#Recover-parameters-for-simulated-data" title="Permalink"></a></h3><h4 id="Define-search-grid"><a class="docs-heading-anchor" href="#Define-search-grid">Define search grid</a><a id="Define-search-grid-1"></a><a class="docs-heading-anchor-permalink" href="#Define-search-grid" title="Permalink"></a></h4><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; fn = &quot;./data/custom_model_grid.csv&quot;</code><code class="nohighlight hljs ansi" style="display:block;">&quot;./data/custom_model_grid.csv&quot;</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; tmp = DataFrame(CSV.File(fn, delim=&quot;,&quot;))</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: ArgumentError: &quot;./data/custom_model_grid.csv&quot; is not a valid file or doesn&#39;t exist</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; param_grid = Dict(pairs(NamedTuple.(eachrow(tmp))))</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: tmp not defined</code></pre><h4 id="Run-grid-search-on-simulated-data"><a class="docs-heading-anchor" href="#Run-grid-search-on-simulated-data">Run grid search on simulated data</a><a id="Run-grid-search-on-simulated-data-1"></a><a class="docs-heading-anchor-permalink" href="#Run-grid-search-on-simulated-data" title="Permalink"></a></h4><p>Even with smaller state space step size the correct decay is not recovered. Instead, the fast response times are attributed to faster drift rates and larger sigmas.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using LinearAlgebra</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; fixed_params = Dict(:η=&gt;0.0, :barrier=&gt;1, :decay=&gt;0, :nonDecisionTime=&gt;100, :bias=&gt;0.0)</code><code class="nohighlight hljs ansi" style="display:block;">Dict{Symbol, Real} with 5 entries:
+  :nonDecisionTime =&gt; 100
+  :bias            =&gt; 0.0
+  :barrier         =&gt; 1
+  :decay           =&gt; 0
+  :η               =&gt; 0.0</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_likelihood_args = (timeStep = 10.0, approxStateStep = 0.01)</code><code class="nohighlight hljs ansi" style="display:block;">(timeStep = 10.0, approxStateStep = 0.01)</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; best_pars, nll_df = ADDM.grid_search(my_sim_data, my_likelihood_fn, param_grid, fixed_params, likelihood_args = my_likelihood_args)</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: my_sim_data not defined</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; sort!(nll_df, [:nll])</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: nll_df not defined</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; show(nll_df, allrows = true)</code><code class="nohighlight hljs ansi" style="display:block;">ERROR: UndefVarError: nll_df not defined</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../empirical_data/">« Parameter estimation on empirical data</a><a class="docs-footer-nextpage" href="../model_comparison/">Uncertainty in the best fitting parameters of a single generative process »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Thursday 1 February 2024 19:23">Thursday 1 February 2024</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
