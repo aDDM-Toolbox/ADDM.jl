@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Defining custom models · ADDM.jl</title><meta name="title" content="Defining custom models · ADDM.jl"/><meta property="og:title" content="Defining custom models · ADDM.jl"/><meta property="twitter:title" content="Defining custom models · ADDM.jl"/><meta name="description" content="Documentation for ADDM.jl."/><meta property="og:description" content="Documentation for ADDM.jl."/><meta property="twitter:description" content="Documentation for ADDM.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="ADDM.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ADDM.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../getting_started/">Getting started with ADDM.jl</a></li><li><a class="tocitem" href="../empirical_data/">Parameter estimation on empirical data</a></li><li class="is-active"><a class="tocitem" href>Defining custom models</a><ul class="internal"><li><a class="tocitem" href="#Load-package"><span>Load package</span></a></li><li><a class="tocitem" href="#Define-simulator"><span>Define simulator</span></a></li><li><a class="tocitem" href="#Define-model-container"><span>Define model container</span></a></li><li><a class="tocitem" href="#Define-likelihood-function"><span>Define likelihood function</span></a></li></ul></li><li><a class="tocitem" href="../model_comparison/">Model comparison</a></li></ul></li><li><a class="tocitem" href="../../apireference/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Defining custom models</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Defining custom models</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/aDDM-Toolbox/ADDM.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/aDDM-Toolbox/ADDM.jl/blob/main/docs/src/tutorials/custom_model.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Defining-custom-models"><a class="docs-heading-anchor" href="#Defining-custom-models">Defining custom models</a><a id="Defining-custom-models-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-custom-models" title="Permalink"></a></h1><p>Though the packages comes with the standard attentional DDM that allows for multiplicative and additive discounting of unattended items, users might also conceive of other generative processes (within the sequantial sampling to a bound framework) that give rise to observed choices, response times.  </p><p>In this tutorial we lay out the framework for how to incorporate such models within our toolbox to take advantage of Julia&#39;s processing speed.  </p><p>Broadly, this involves defining three parts: </p><ol><li>trial simulator describing how the new parameter changes the data generating process resulting in a choice and response time<ul><li>this is then fed into <code>ADDM.simulate_data</code> along with the model object and stimuli to generate choice and response times.</li></ul></li><li>model object with new parameter<ul><li>this is only a container of key-value pairs of parameter names and values used a convenient wrapper to feed into the simulator and likelihood computer.</li></ul></li><li>trial likelihood calculator computing the probability of the observed choice and response time<ul><li>this is then fed into <code>ADDM.grid_search</code> along with the data you want to compute the likelihoods for and the parameter search space.</li></ul></li></ol><h2 id="Load-package"><a class="docs-heading-anchor" href="#Load-package">Load package</a><a id="Load-package-1"></a><a class="docs-heading-anchor-permalink" href="#Load-package" title="Permalink"></a></h2><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using ADDM</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using CSV</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using DataFrames</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using Distributions</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using LinearAlgebra</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using StatsPlots</code><code class="nohighlight hljs ansi" style="display:block;"></code></pre><h2 id="Define-simulator"><a class="docs-heading-anchor" href="#Define-simulator">Define simulator</a><a id="Define-simulator-1"></a><a class="docs-heading-anchor-permalink" href="#Define-simulator" title="Permalink"></a></h2><p>The built-in model has a <code>decay</code> parameter for a linear decay of the <code>barrier</code>. Let&#39;s build a model with an exponential decay of the barrier such that the barrier at each timestep is defined as <code>barrier(t) = exp(-λt)</code>.</p><p>Based on the <a href="https://github.com/aDDM-Toolbox/ADDM.jl/blob/main/src/simulate_data.jl">built-in trial simulators as defined here</a> the trial simulator would look like the following:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; function my_trial_simulator(;model::ADDM.aDDM, fixationData::ADDM.FixationData,
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Defining custom models · ADDM.jl</title><meta name="title" content="Defining custom models · ADDM.jl"/><meta property="og:title" content="Defining custom models · ADDM.jl"/><meta property="twitter:title" content="Defining custom models · ADDM.jl"/><meta name="description" content="Documentation for ADDM.jl."/><meta property="og:description" content="Documentation for ADDM.jl."/><meta property="twitter:description" content="Documentation for ADDM.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="ADDM.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ADDM.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Tutorials</span><ul><li><a class="tocitem" href="../getting_started/">Getting started with ADDM.jl</a></li><li><a class="tocitem" href="../empirical_data/">Parameter estimation on empirical data</a></li><li><a class="tocitem" href="../model_comparison/">Model comparison</a></li><li class="is-active"><a class="tocitem" href>Defining custom models</a><ul class="internal"><li><a class="tocitem" href="#Load-package"><span>Load package</span></a></li><li><a class="tocitem" href="#Define-simulator"><span>Define simulator</span></a></li><li><a class="tocitem" href="#Define-model-container"><span>Define model container</span></a></li><li><a class="tocitem" href="#Define-likelihood-function"><span>Define likelihood function</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../apireference/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Tutorials</a></li><li class="is-active"><a href>Defining custom models</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Defining custom models</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/aDDM-Toolbox/ADDM.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/aDDM-Toolbox/ADDM.jl/blob/main/docs/src/tutorials/custom_model.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Defining-custom-models"><a class="docs-heading-anchor" href="#Defining-custom-models">Defining custom models</a><a id="Defining-custom-models-1"></a><a class="docs-heading-anchor-permalink" href="#Defining-custom-models" title="Permalink"></a></h1><p>Though the packages comes with the standard attentional DDM that allows for multiplicative and additive discounting of unattended items, users might also conceive of other generative processes (within the sequantial sampling to a bound framework) that give rise to observed choices, response times.  </p><p>In this tutorial we lay out the framework for how to incorporate such models within our toolbox to take advantage of Julia&#39;s processing speed.  </p><p>Broadly, this involves defining three parts: </p><ol><li>trial simulator describing how the new parameter changes the data generating process resulting in a choice and response time<ul><li>this is then fed into <code>ADDM.simulate_data</code> along with the model object and stimuli to generate choice and response times.</li></ul></li><li>model object with new parameter<ul><li>this is only a container of key-value pairs of parameter names and values used a convenient wrapper to feed into the simulator and likelihood computer.</li></ul></li><li>trial likelihood calculator computing the probability of the observed choice and response time<ul><li>this is then fed into <code>ADDM.grid_search</code> along with the data you want to compute the likelihoods for and the parameter search space.</li></ul></li></ol><h2 id="Load-package"><a class="docs-heading-anchor" href="#Load-package">Load package</a><a id="Load-package-1"></a><a class="docs-heading-anchor-permalink" href="#Load-package" title="Permalink"></a></h2><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; using ADDM</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using CSV</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using DataFrames</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using Distributions</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using LinearAlgebra</code><code class="nohighlight hljs ansi" style="display:block;"></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; using StatsPlots</code><code class="nohighlight hljs ansi" style="display:block;"></code></pre><h2 id="Define-simulator"><a class="docs-heading-anchor" href="#Define-simulator">Define simulator</a><a id="Define-simulator-1"></a><a class="docs-heading-anchor-permalink" href="#Define-simulator" title="Permalink"></a></h2><p>The built-in model has a <code>decay</code> parameter for a linear decay of the <code>barrier</code>. Let&#39;s build a model with an exponential decay of the barrier such that the barrier at each timestep is defined as <code>barrier(t) = exp(-λt)</code>.</p><p>Based on the <a href="https://github.com/aDDM-Toolbox/ADDM.jl/blob/main/src/simulate_data.jl">built-in trial simulators as defined here</a> the trial simulator would look like the following:</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; function my_trial_simulator(;model::ADDM.aDDM, fixationData::ADDM.FixationData,
                                valueLeft::Number, valueRight::Number,
                                timeStep::Number=10.0, numFixDists::Int64=3, cutOff::Number=100000)
        
@@ -439,14 +439,14 @@ my_model.λ = .05</code></pre><h3 id="Simulate-data"><a class="docs-heading-anch
  Row │ d        lambda   sigma    theta    nll
      │<span class="sgr90"> Float64  Float64  Float64  Float64  Float64
 ─────┼──────────────────────────────────────────────────
-   1 │   0.014     0.0      0.07      0.6  14563.3
-   2 │   0.014     0.0      0.07      0.9  15806.5
-   3 │   0.007     0.0      0.07      0.6  17616.8
-   4 │   0.007     0.0      0.07      0.9  18049.4
-   5 │   0.007     0.0      0.07      0.0  18298.3
-   6 │   0.014     0.0      0.07      0.0  18376.3
-   7 │   0.003     0.0      0.07      0.6  20065.9
-   8 │   0.003     0.0      0.07      0.0  20071.0
+   1 │   0.014     0.0      0.07      0.6  14703.4
+   2 │   0.014     0.0      0.07      0.9  16063.8
+   3 │   0.007     0.0      0.07      0.6  17719.0
+   4 │   0.007     0.0      0.07      0.9  18174.5
+   5 │   0.007     0.0      0.07      0.0  18445.4
+   6 │   0.014     0.0      0.07      0.0  18671.9
+   7 │   0.003     0.0      0.07      0.6  20125.2
+   8 │   0.003     0.0      0.07      0.0  20144.8
   ⋮  │    ⋮        ⋮        ⋮        ⋮          ⋮
   75 │   0.003     0.05     0.01      0.6      4.3237e5
   76 │   0.007     0.05     0.01      0.9      4.3237e5
@@ -459,61 +459,61 @@ my_model.λ = .05</code></pre><h3 id="Simulate-data"><a class="docs-heading-anch
  Row │ d        lambda   sigma    theta    nll
      │ Float64  Float64  Float64  Float64  Float64
 ─────┼────────────────────────────────────────────────────
-   1 │   0.014     0.0      0.07      0.6   14563.3
-   2 │   0.014     0.0      0.07      0.9   15806.5
-   3 │   0.007     0.0      0.07      0.6   17616.8
-   4 │   0.007     0.0      0.07      0.9   18049.4
-   5 │   0.007     0.0      0.07      0.0   18298.3
-   6 │   0.014     0.0      0.07      0.0   18376.3
-   7 │   0.003     0.0      0.07      0.6   20065.9
-   8 │   0.003     0.0      0.07      0.0   20071.0
-   9 │   0.003     0.0      0.07      0.9   20210.5
-  10 │   0.014     0.0      0.03      0.6   37341.5
-  11 │   0.014     0.0      0.03      0.9   42993.1
-  12 │   0.007     0.0      0.03      0.6   51561.7
-  13 │   0.007     0.0      0.03      0.9   53129.0
-  14 │   0.007     0.0      0.03      0.0   55985.1
-  15 │   0.014     0.0      0.03      0.0   57406.1
-  16 │   0.003     0.0      0.03      0.6   63186.7
-  17 │   0.003     0.0      0.03      0.9   63553.4
-  18 │   0.003     0.0      0.03      0.0   63838.0
-  19 │   0.014     0.0      0.01      0.6       2.24019e5
-  20 │   0.014     0.0      0.01      0.9       2.30966e5
-  21 │   0.014     0.05     0.07      0.0       2.33171e5
-  22 │   0.014     0.05     0.07      0.6       2.43905e5
-  23 │   0.007     0.05     0.07      0.0       2.50466e5
-  24 │   0.014     0.05     0.07      0.9       2.51155e5
-  25 │   0.014     0.0      0.01      0.0       2.54508e5
-  26 │   0.007     0.05     0.07      0.6       2.57097e5
-  27 │   0.007     0.05     0.07      0.9       2.60135e5
-  28 │   0.003     0.05     0.07      0.0  260949.0
-  29 │   0.003     0.05     0.07      0.6       2.62447e5
-  30 │   0.003     0.05     0.07      0.9       2.64346e5
-  31 │   0.007     0.0      0.01      0.9       2.98461e5
-  32 │   0.007     0.0      0.01      0.6       3.11828e5
-  33 │   0.007     0.0      0.01      0.0       3.12947e5
-  34 │   0.014     0.1      0.07      0.0  328518.0
-  35 │   0.014     0.1      0.07      0.6       3.3707e5
-  36 │   0.014     0.1      0.07      0.9       3.40549e5
-  37 │   0.007     0.1      0.07      0.0       3.42809e5
-  38 │   0.007     0.1      0.07      0.6       3.46546e5
-  39 │   0.007     0.1      0.07      0.9       3.47472e5
-  40 │   0.003     0.1      0.07      0.0       3.49286e5
-  41 │   0.003     0.1      0.07      0.6       3.51117e5
-  42 │   0.003     0.1      0.07      0.9       3.5172e5
-  43 │   0.003     0.0      0.01      0.9       3.59762e5
-  44 │   0.003     0.0      0.01      0.6       3.68555e5
-  45 │   0.003     0.0      0.01      0.0       3.72909e5
-  46 │   0.014     0.05     0.03      0.0       4.23805e5
-  47 │   0.014     0.05     0.03      0.6       4.26809e5
-  48 │   0.014     0.05     0.03      0.9       4.27517e5
-  49 │   0.007     0.05     0.03      0.0       4.28173e5
-  50 │   0.007     0.05     0.03      0.6       4.29156e5
-  51 │   0.007     0.05     0.03      0.9       4.29501e5
-  52 │   0.003     0.05     0.03      0.0       4.29936e5
-  53 │   0.003     0.05     0.03      0.6       4.30224e5
-  54 │   0.003     0.05     0.03      0.9       4.3034e5
-  55 │   0.014     0.1      0.03      0.0       4.32328e5
+   1 │   0.014     0.0      0.07      0.6   14703.4
+   2 │   0.014     0.0      0.07      0.9   16063.8
+   3 │   0.007     0.0      0.07      0.6   17719.0
+   4 │   0.007     0.0      0.07      0.9   18174.5
+   5 │   0.007     0.0      0.07      0.0   18445.4
+   6 │   0.014     0.0      0.07      0.0   18671.9
+   7 │   0.003     0.0      0.07      0.6   20125.2
+   8 │   0.003     0.0      0.07      0.0   20144.8
+   9 │   0.003     0.0      0.07      0.9   20270.6
+  10 │   0.014     0.0      0.03      0.6   37983.8
+  11 │   0.014     0.0      0.03      0.9   44208.8
+  12 │   0.007     0.0      0.03      0.6   51996.4
+  13 │   0.007     0.0      0.03      0.9   53655.7
+  14 │   0.007     0.0      0.03      0.0   56683.9
+  15 │   0.014     0.0      0.03      0.0   58854.1
+  16 │   0.003     0.0      0.03      0.6   63385.2
+  17 │   0.003     0.0      0.03      0.9   63744.3
+  18 │   0.003     0.0      0.03      0.0   64136.6
+  19 │   0.014     0.0      0.01      0.6       2.25546e5
+  20 │   0.014     0.0      0.01      0.9       2.32231e5
+  21 │   0.014     0.05     0.07      0.0       2.32897e5
+  22 │   0.014     0.05     0.07      0.6       2.44731e5
+  23 │   0.007     0.05     0.07      0.0       2.49348e5
+  24 │   0.014     0.05     0.07      0.9       2.51788e5
+  25 │   0.007     0.05     0.07      0.6       2.56751e5
+  26 │   0.014     0.0      0.01      0.0       2.57067e5
+  27 │   0.007     0.05     0.07      0.9       2.59276e5
+  28 │   0.003     0.05     0.07      0.0       2.60087e5
+  29 │   0.003     0.05     0.07      0.6       2.62102e5
+  30 │   0.003     0.05     0.07      0.9       2.63845e5
+  31 │   0.007     0.0      0.01      0.9       2.95657e5
+  32 │   0.007     0.0      0.01      0.6       3.09819e5
+  33 │   0.007     0.0      0.01      0.0       3.14474e5
+  34 │   0.014     0.1      0.07      0.0  327765.0
+  35 │   0.014     0.1      0.07      0.6       3.36616e5
+  36 │   0.014     0.1      0.07      0.9       3.40595e5
+  37 │   0.007     0.1      0.07      0.0       3.42631e5
+  38 │   0.007     0.1      0.07      0.6       3.46443e5
+  39 │   0.007     0.1      0.07      0.9       3.47667e5
+  40 │   0.003     0.1      0.07      0.0       3.49334e5
+  41 │   0.003     0.1      0.07      0.6       3.51446e5
+  42 │   0.003     0.1      0.07      0.9       3.5219e5
+  43 │   0.003     0.0      0.01      0.9       3.56795e5
+  44 │   0.003     0.0      0.01      0.6       3.66115e5
+  45 │   0.003     0.0      0.01      0.0  371769.0
+  46 │   0.014     0.05     0.03      0.0       4.23796e5
+  47 │   0.014     0.05     0.03      0.6       4.26518e5
+  48 │   0.014     0.05     0.03      0.9       4.27198e5
+  49 │   0.007     0.05     0.03      0.0       4.27982e5
+  50 │   0.007     0.05     0.03      0.6       4.28815e5
+  51 │   0.007     0.05     0.03      0.9       4.29112e5
+  52 │   0.003     0.05     0.03      0.0       4.29591e5
+  53 │   0.003     0.05     0.03      0.6       4.29848e5
+  54 │   0.003     0.05     0.03      0.9       4.29965e5
+  55 │   0.014     0.1      0.03      0.0       4.32335e5
   56 │   0.003     0.1      0.03      0.6       4.32367e5
   57 │   0.014     0.1      0.03      0.9       4.32367e5
   58 │   0.003     0.1      0.03      0.0       4.32367e5
@@ -645,4 +645,4 @@ my_model.λ = .05</code></pre><h3 id="Simulate-data"><a class="docs-heading-anch
    6 │     0.9     0.1             0.0
    7 │     0.9     0.05            0.0
    8 │     0.6     0.1             0.0
-   9 │     0.6     0.05            0.0</span></span></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ADDM.margpostplot(marginal_posteriors)</code><code class="nohighlight hljs ansi" style="display:block;">Plot{Plots.GRBackend() n=10}</code><code class="nohighlight hljs ansi" style="display:block;"></code></pre><p><img src="../plot2.png" alt="plot"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../empirical_data/">« Parameter estimation on empirical data</a><a class="docs-footer-nextpage" href="../model_comparison/">Model comparison »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Friday 2 February 2024 18:16">Friday 2 February 2024</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+   9 │     0.6     0.05            0.0</span></span></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; ADDM.margpostplot(marginal_posteriors)</code><code class="nohighlight hljs ansi" style="display:block;">Plot{Plots.GRBackend() n=10}</code><code class="nohighlight hljs ansi" style="display:block;"></code></pre><p><img src="../plot2.png" alt="plot"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../model_comparison/">« Model comparison</a><a class="docs-footer-nextpage" href="../../apireference/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Friday 2 February 2024 18:51">Friday 2 February 2024</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
