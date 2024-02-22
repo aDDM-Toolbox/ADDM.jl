@@ -33,14 +33,14 @@ SimData = ADDM.simulate_data(MyModel, MyStims, ADDM.aDDM_simulate_trial, MyArgs)
  Row │ d        sigma    theta    nll
      │<span class="sgr90"> Float64  Float64  Float64  Float64
 ─────┼──────────────────────────────────────────
-   1 │   0.007     0.05      0.6   8218.84
-   2 │   0.007     0.05      0.4   8296.89
-   3 │   0.005     0.05      0.6   8388.98
-   4 │   0.005     0.05      0.4   8466.21
-   5 │   0.007     0.05      0.2   8511.3
-   6 │   0.005     0.05      0.2   8610.35
-   7 │   0.003     0.05      0.6   8847.58
-   8 │   0.003     0.05      0.4   8907.2
+   1 │   0.007     0.05      0.6   8207.45
+   2 │   0.007     0.05      0.4   8277.98
+   3 │   0.005     0.05      0.6   8379.28
+   4 │   0.005     0.05      0.4   8449.5
+   5 │   0.007     0.05      0.2   8488.35
+   6 │   0.005     0.05      0.2   8588.37
+   7 │   0.003     0.05      0.6   8843.49
+   8 │   0.003     0.05      0.4   8897.98
   ⋮  │    ⋮        ⋮        ⋮           ⋮
   21 │   0.003     0.01      0.2      2.06312e5
   22 │   0.003     0.01      0.6      2.06312e5
@@ -50,44 +50,44 @@ SimData = ADDM.simulate_data(MyModel, MyStims, ADDM.aDDM_simulate_trial, MyArgs)
   26 │   0.003     0.01      0.4      2.06312e5
   27 │   0.007     0.01      0.6      2.06312e5
 </span><span class="sgr36">                                 12 rows omitted</span></span></code></pre><div class="admonition is-info"><header class="admonition-header">Note</header><div class="admonition-body"><p>You can save the data containing the negative log likelihood info for all parameter combinations you searched for. Make sure that you have mounted a local directory to your container if you&#39;re working through this tutorial in a docker container. The output path below is the one specified in the installation instructions. You should change it if you want to save your output elsewhere.</p><pre><code class="nohighlight hljs">output_path = &#39;/home/jovyan/work/all_nll_df.csv&#39;
-CSV.write(output_path, all_nll_df)</code></pre></div></div><p>You might have noticed that the grid search did not identify the true parameters (<code>d = 0.007, σ = 0.03, θ = .6</code>) as the ones with the highest likelihood. This highlights the importance of choosing good stepsizes for the temporal and spatial discretization.</p><p>The default stepsizes are defined as <code>timeStep = 10.0, approxStateStep = 0.1</code>. Let&#39;s reduce the spatial step size and see if we can recover the corect parameter combination.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_likelihood_args = (timeStep = 10.0, approxStateStep = 0.01)</code><code class="nohighlight hljs ansi" style="display:block;">(timeStep = 10.0, approxStateStep = 0.01)</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; best_pars, all_nll_df = ADDM.grid_search(SimData, param_grid, ADDM.aDDM_get_trial_likelihood, Dict(:η=&gt;0.0, :barrier=&gt;1, :decay=&gt;0, :nonDecisionTime=&gt;100, :bias=&gt;0.0), likelihood_args=my_likelihood_args)</code><code class="nohighlight hljs ansi" style="display:block;">(Dict{Symbol, Real}(:nonDecisionTime =&gt; 100, :bias =&gt; 0.0, :d =&gt; 0.007, :barrier =&gt; 1, :sigma =&gt; 0.03, :theta =&gt; 0.6, :decay =&gt; 0, :η =&gt; 0.0, :nll =&gt; 7816.861181501725), <span class="sgr1">27×4 DataFrame
+CSV.write(output_path, all_nll_df)</code></pre></div></div><p>You might have noticed that the grid search did not identify the true parameters (<code>d = 0.007, σ = 0.03, θ = .6</code>) as the ones with the highest likelihood. This highlights the importance of choosing good stepsizes for the temporal and spatial discretization.</p><p>The default stepsizes are defined as <code>timeStep = 10.0, approxStateStep = 0.1</code>. Let&#39;s reduce the spatial step size and see if we can recover the corect parameter combination.</p><pre><code class="language-julia-repl hljs" style="display:block;">julia&gt; my_likelihood_args = (timeStep = 10.0, approxStateStep = 0.01)</code><code class="nohighlight hljs ansi" style="display:block;">(timeStep = 10.0, approxStateStep = 0.01)</code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; best_pars, all_nll_df = ADDM.grid_search(SimData, param_grid, ADDM.aDDM_get_trial_likelihood, Dict(:η=&gt;0.0, :barrier=&gt;1, :decay=&gt;0, :nonDecisionTime=&gt;100, :bias=&gt;0.0), likelihood_args=my_likelihood_args)</code><code class="nohighlight hljs ansi" style="display:block;">(Dict{Symbol, Real}(:nonDecisionTime =&gt; 100, :bias =&gt; 0.0, :d =&gt; 0.007, :barrier =&gt; 1, :sigma =&gt; 0.03, :theta =&gt; 0.6, :decay =&gt; 0, :η =&gt; 0.0, :nll =&gt; 7783.653330574311), <span class="sgr1">27×4 DataFrame
  Row │ d        sigma    theta    nll
      │<span class="sgr90"> Float64  Float64  Float64  Float64
 ─────┼─────────────────────────────────────
-   1 │   0.005     0.03      0.2   8790.51
-   2 │   0.003     0.05      0.4   8933.2
-   3 │   0.005     0.01      0.6  15375.3
-   4 │   0.007     0.01      0.4  13777.7
-   5 │   0.007     0.03      0.6   7816.86
-   6 │   0.005     0.05      0.2   8621.02
-   7 │   0.005     0.05      0.4   8471.17
-   8 │   0.003     0.01      0.2  28505.9
+   1 │   0.005     0.03      0.2   8721.6
+   2 │   0.003     0.05      0.4   8920.95
+   3 │   0.005     0.01      0.6  15185.1
+   4 │   0.007     0.01      0.4  13381.0
+   5 │   0.007     0.03      0.6   7783.65
+   6 │   0.005     0.05      0.2   8596.05
+   7 │   0.005     0.05      0.4   8451.6
+   8 │   0.003     0.01      0.2  28144.2
   ⋮  │    ⋮        ⋮        ⋮        ⋮
-  21 │   0.007     0.03      0.4   7993.47
-  22 │   0.005     0.01      0.2  20117.7
-  23 │   0.003     0.01      0.4  26385.2
-  24 │   0.007     0.05      0.4   8280.3
-  25 │   0.007     0.01      0.6  12644.8
-  26 │   0.005     0.05      0.6   8389.23
-  27 │   0.007     0.05      0.6   8189.22
+  21 │   0.007     0.03      0.4   7935.82
+  22 │   0.005     0.01      0.2  19592.8
+  23 │   0.003     0.01      0.4  26142.3
+  24 │   0.007     0.05      0.4   8258.7
+  25 │   0.007     0.01      0.6  12464.2
+  26 │   0.005     0.05      0.6   8376.53
+  27 │   0.007     0.05      0.6   8174.97
 </span><span class="sgr36">                            12 rows omitted)</span></span></code><br/><code class="language-julia-repl hljs" style="display:block;">julia&gt; sort!(all_nll_df, [:nll])</code><code class="nohighlight hljs ansi" style="display:block;"><span class="sgr1">27×4 DataFrame
  Row │ d        sigma    theta    nll
      │<span class="sgr90"> Float64  Float64  Float64  Float64
 ─────┼─────────────────────────────────────
-   1 │   0.007     0.03      0.6   7816.86
-   2 │   0.007     0.03      0.4   7993.47
-   3 │   0.007     0.05      0.6   8189.22
-   4 │   0.005     0.03      0.6   8215.95
-   5 │   0.007     0.05      0.4   8280.3
-   6 │   0.005     0.05      0.6   8389.23
-   7 │   0.005     0.03      0.4   8430.52
-   8 │   0.005     0.05      0.4   8471.17
+   1 │   0.007     0.03      0.6   7783.65
+   2 │   0.007     0.03      0.4   7935.82
+   3 │   0.007     0.05      0.6   8174.97
+   4 │   0.005     0.03      0.6   8185.75
+   5 │   0.007     0.05      0.4   8258.7
+   6 │   0.005     0.05      0.6   8376.53
+   7 │   0.005     0.03      0.4   8379.2
+   8 │   0.007     0.03      0.2   8401.21
   ⋮  │    ⋮        ⋮        ⋮        ⋮
-  21 │   0.005     0.01      0.6  15375.3
-  22 │   0.007     0.01      0.2  17133.3
-  23 │   0.005     0.01      0.4  17236.5
-  24 │   0.005     0.01      0.2  20117.7
-  25 │   0.003     0.01      0.6  24608.0
-  26 │   0.003     0.01      0.4  26385.2
-  27 │   0.003     0.01      0.2  28505.9
-</span><span class="sgr36">                            12 rows omitted</span></span></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../02_empirical_data/">Parameter estimation on empirical data »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Thursday 22 February 2024 20:32">Thursday 22 February 2024</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  21 │   0.005     0.01      0.6  15185.1
+  22 │   0.007     0.01      0.2  16590.7
+  23 │   0.005     0.01      0.4  16859.5
+  24 │   0.005     0.01      0.2  19592.8
+  25 │   0.003     0.01      0.6  24500.2
+  26 │   0.003     0.01      0.4  26142.3
+  27 │   0.003     0.01      0.2  28144.2
+</span><span class="sgr36">                            12 rows omitted</span></span></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../02_empirical_data/">Parameter estimation on empirical data »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Thursday 22 February 2024 21:35">Thursday 22 February 2024</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
