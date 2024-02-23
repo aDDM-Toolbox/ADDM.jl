@@ -27,14 +27,14 @@ MyStims = (valueLeft = randn(1000), valueRight = randn(1000))</code></pre><h3 id
  Row │ d        sigma    theta    nll
      │<span class="sgr90"> Float64  Float64  Float64  Float64
 ─────┼──────────────────────────────────────────
-   1 │   0.007     0.05      0.6   8230.93
-   2 │   0.007     0.05      0.4   8298.33
-   3 │   0.005     0.05      0.6   8396.38
-   4 │   0.005     0.05      0.4   8466.58
-   5 │   0.007     0.05      0.2   8509.55
-   6 │   0.005     0.05      0.2   8607.52
-   7 │   0.003     0.05      0.6   8856.0
-   8 │   0.003     0.05      0.4   8911.79
+   1 │   0.007     0.05      0.6   8130.27
+   2 │   0.007     0.05      0.4   8190.65
+   3 │   0.005     0.05      0.6   8307.29
+   4 │   0.005     0.05      0.4   8374.78
+   5 │   0.007     0.05      0.2   8392.32
+   6 │   0.005     0.05      0.2   8511.93
+   7 │   0.003     0.05      0.6   8772.77
+   8 │   0.003     0.05      0.4   8828.2
   ⋮  │    ⋮        ⋮        ⋮           ⋮
   21 │   0.003     0.01      0.2      2.06312e5
   22 │   0.003     0.01      0.6      2.06312e5
@@ -48,20 +48,20 @@ CSV.write(output_path, all_nll_df)</code></pre></div></div><p>You might have not
  Row │ d        sigma    theta    nll
      │<span class="sgr90"> Float64  Float64  Float64  Float64
 ─────┼─────────────────────────────────────
-   1 │   0.007     0.03      0.6   7767.02
-   2 │   0.007     0.03      0.4   7913.91
-   3 │   0.005     0.03      0.6   8152.82
-   4 │   0.007     0.05      0.6   8194.43
-   5 │   0.007     0.05      0.4   8275.95
-   6 │   0.005     0.03      0.4   8347.66
-   7 │   0.007     0.03      0.2   8383.25
-   8 │   0.005     0.05      0.6   8391.44
+   1 │   0.007     0.03      0.6   7727.51
+   2 │   0.007     0.03      0.4   7864.95
+   3 │   0.007     0.05      0.6   8108.46
+   4 │   0.005     0.03      0.6   8137.57
+   5 │   0.007     0.05      0.4   8182.33
+   6 │   0.005     0.05      0.6   8316.49
+   7 │   0.007     0.03      0.2   8319.92
+   8 │   0.005     0.03      0.4   8330.78
   ⋮  │    ⋮        ⋮        ⋮        ⋮
-  21 │   0.005     0.01      0.6  14610.5
-  22 │   0.007     0.01      0.2  16178.4
-  23 │   0.005     0.01      0.4  16304.6
-  24 │   0.005     0.01      0.2  19099.8
-  25 │   0.003     0.01      0.6  23788.8
-  26 │   0.003     0.01      0.4  25474.4
-  27 │   0.003     0.01      0.2  27531.9
-</span><span class="sgr36">                            12 rows omitted</span></span></code></pre><p>Success! Reducing the state step size was sufficient to recover the true parameter combination for the simulated dataset.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../02_empirical_data/">Parameter estimation on empirical data »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Friday 23 February 2024 01:20">Friday 23 February 2024</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  21 │   0.005     0.01      0.6  14978.1
+  22 │   0.007     0.01      0.2  16252.8
+  23 │   0.005     0.01      0.4  16677.8
+  24 │   0.005     0.01      0.2  19471.5
+  25 │   0.003     0.01      0.6  24226.8
+  26 │   0.003     0.01      0.4  25932.8
+  27 │   0.003     0.01      0.2  28012.7
+</span><span class="sgr36">                            12 rows omitted</span></span></code></pre><p>Success! Reducing the state step size was sufficient to recover the true parameter combination for the simulated dataset.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../02_empirical_data/">Parameter estimation on empirical data »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="auto">Automatic (OS)</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.2.1 on <span class="colophon-date" title="Friday 23 February 2024 01:43">Friday 23 February 2024</span>. Using Julia version 1.9.4.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
